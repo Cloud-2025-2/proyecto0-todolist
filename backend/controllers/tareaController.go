@@ -4,9 +4,12 @@ import (
 	"net/http"
 	"time"
 
-	database "github.com/IavilaGw/proyecto0/config"
-	"github.com/IavilaGw/proyecto0/middleware"
-	"github.com/IavilaGw/proyecto0/models"
+	database "proyecto0-todolist/config"
+
+	"proyecto0-todolist/middleware"
+
+	"proyecto0-todolist/models"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -63,6 +66,11 @@ func ActualizarTarea(c *gin.Context) {
 		return
 	}
 
+	if t.IDUsuario != middleware.UserID(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "no tienes permisos para actualizar esta tarea"})
+		return
+	}
+
 	var in ActualizarTareaDTO
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -93,7 +101,18 @@ func ActualizarTarea(c *gin.Context) {
 
 // DELETE /tareas/:id  → Confirmación de eliminación
 func EliminarTarea(c *gin.Context) {
-	if err := database.DB.Delete(&models.Tarea{}, c.Param("id")).Error; err != nil {
+	var t models.Tarea
+	if err := database.DB.First(&t, c.Param("id")).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "tarea no encontrada"})
+		return
+	}
+
+	if t.IDUsuario != middleware.UserID(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "no tienes permisos para eliminar esta tarea"})
+		return
+	}
+
+	if err := database.DB.Delete(&t).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no se pudo eliminar"})
 		return
 	}
@@ -108,4 +127,29 @@ func ListarTareasPorUsuario(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, tareas)
+}
+
+// GET /tareas/:id  → Detalles de la tarea
+func ObtenerTareaPorID(c *gin.Context) {
+	var tarea models.Tarea
+
+	// Obtener la tarea por ID
+	if err := database.DB.First(&tarea, c.Param("id")).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "tarea no encontrada"})
+		return
+	}
+
+	// Verificar que la tarea pertenezca al usuario autenticado
+	if tarea.IDUsuario != middleware.UserID(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "no tienes permisos para ver esta tarea"})
+		return
+	}
+
+	// Cargar los datos relacionados (usuario y categoría)
+	if err := database.DB.Preload("Usuario").Preload("Categoria").First(&tarea, tarea.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error al cargar datos relacionados"})
+		return
+	}
+
+	c.JSON(http.StatusOK, tarea)
 }

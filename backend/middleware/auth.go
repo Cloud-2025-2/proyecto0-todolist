@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/IavilaGw/proyecto0/auth"
+	"proyecto0-todolist/auth"
+
 	"github.com/gin-gonic/gin"
 )
 

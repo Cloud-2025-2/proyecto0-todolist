@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/IavilaGw/proyecto0/controllers"
-	"github.com/IavilaGw/proyecto0/middleware"
+	"proyecto0-todolist/controllers"
+	"proyecto0-todolist/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,11 +16,13 @@ func Register(r *gin.Engine) {
 
 	cat := api.Group("/categorias", middleware.Auth())
 	cat.POST("", controllers.CrearCategoria)
-	cat.DELETE("/:id", controllers.EliminarCategoria)
 	cat.GET("", controllers.ListarCategorias)
+	cat.GET("/:id", controllers.ObtenerCategoriaPorID)
+	cat.DELETE("/:id", controllers.EliminarCategoria)
 
 	t := api.Group("/tareas", middleware.Auth())
 	t.POST("", controllers.CrearTarea)
+	t.GET("/:id", controllers.ObtenerTareaPorID)
 	t.PUT("/:id", controllers.ActualizarTarea)
 	t.DELETE("/:id", controllers.EliminarTarea)
 	t.GET("/usuario", controllers.ListarTareasPorUsuario)

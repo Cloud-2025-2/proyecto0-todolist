@@ -1,0 +1,9 @@
+# Archivos que NO se copian al contenedor
+.env
+.env.*
+*.log
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
